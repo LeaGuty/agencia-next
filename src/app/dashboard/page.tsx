@@ -1,72 +1,162 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { getRequests } from '@/services/api';
-import CreateRequestForm from '@/components/dashboard/CreateRequestForm';
-import RequestActions from '@/components/dashboard/RequestActions';
+'use client';
 
-export default async function DashboardPage() {
-  // 1. Obtener cookie del servidor (Ahora con await)
-  const cookieStore = await cookies(); 
-  const token = cookieStore.get('token')?.value;
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { travelService } from '@/services/api';
+import { TravelRequest, User } from '@/types';
+import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 
-  // 2. Si no hay token, fuera de aquí
-  if (!token) {
-    redirect('/login');
+// Implementación de carga dinámica (Lazy Loading) 
+// Se define un componente de carga (loading) para mejorar la experiencia del usuario
+const CreateRequestForm = dynamic(
+  () => import('@/components/dashboard/CreateRequestForm'),
+  { 
+    loading: () => <div className="h-64 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center text-gray-500">Cargando formulario...</div>,
+    ssr: false // Desactiva el renderizado del lado del servidor para este módulo específico según la guía
   }
+);
 
-  // 3. Obtener datos (esto tardará 3 segundos por tu backend)
-  const requests = await getRequests(token);
+export default function DashboardPage() {
+  const [requests, setRequests] = useState<TravelRequest[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Requerimiento Semana 6: Simular espera de 3 segundos para retroalimentación visual
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      const data = await travelService.getAll();
+      setRequests(data);
+    } catch (error) {
+      console.error('Error al cargar solicitudes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
+    if (!userData || !token) {
+      router.push('/login');
+      return;
+    }
+
+    setUser(JSON.parse(userData));
+    loadData();
+  }, [router]);
+
+  const handleDelete = async (id: string) => {
+    if (confirm('¿Está seguro de eliminar esta solicitud?')) {
+      await travelService.delete(id);
+      loadData();
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/login');
+  };
+
+  // Mientras loading es true, se muestra el Skeleton (Retroalimentación visual)
+  if (loading) return <DashboardSkeleton />;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Panel de Solicitudes</h1>
-          <form action={async () => {
-            'use server';
-            const { cookies } = require('next/headers');
-            // También aquí necesitamos await si usas la versión nueva
-            const store = await cookies(); 
-            store.delete('token');
-            redirect('/login');
-          }}>
-            <button className="text-gray-600 hover:text-red-600 font-medium">
-              Cerrar Sesión
-            </button>
-          </form>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 text-black">
+      <header className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div>
+          <h1 className="text-2xl font-extrabold text-blue-600">Portal Agencia de Viajes</h1>
+          <p className="text-gray-500 text-sm">
+            Bienvenido, <span className="font-bold">{user?.name}</span> 
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs uppercase">
+              {user?.role === 'agent' ? 'Agente' : 'Cliente'}
+            </span>
+          </p>
         </div>
+        <button 
+          onClick={handleLogout} 
+          className="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors"
+        >
+          Cerrar Sesión
+        </button>
+      </header>
 
-        {/* Formulario (Cliente) */}
-        <CreateRequestForm />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Lógica de Rol: Solo el Agente puede crear solicitudes */}
+        {user?.role === 'agent' && (
+          <div className="lg:col-span-1">
+            <CreateRequestForm onSuccess={loadData} />
+          </div>
+        )}
 
-        {/* Lista de Resultados (Renderizada en Servidor) */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {requests.length === 0 ? (
-            <p className="text-gray-500 col-span-full text-center py-10">
-              No tienes solicitudes de viaje pendientes.
-            </p>
-          ) : (
-            requests.map((req) => (
-              <div key={req.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">{req.destination}</h2>
-                  <span className={`px-2 py-1 rounded text-xs font-semibold
-                    ${req.status === 'confirmed' ? 'bg-green-100 text-green-700' : 
-                      req.status === 'cancelled' ? 'bg-red-100 text-red-700' : 
-                      'bg-yellow-100 text-yellow-700'}`}>
-                    {req.status === 'pending' ? 'Pendiente' : req.status}
-                  </span>
+        {/* Tabla de Solicitudes (Visible para todos, pero con datos filtrados por rol) */}
+        <div className={user?.role === 'agent' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50">
+              <h2 className="font-bold text-gray-700">Listado de Solicitudes</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {user?.role === 'agent' && <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">ID</th>}
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Pasajero</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Ruta y Tipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Estado</th>
+                    {user?.role === 'agent' && <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Acciones</th>}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {requests.map((req) => (
+                    <tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
+                      {user?.role === 'agent' && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-blue-600">
+                          #{req.id}
+                        </td>
+                      )}
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-gray-900">{req.passengerName}</div>
+                        <div className="text-xs text-gray-500">{req.dni}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-700">{req.origin} → {req.destination}</div>
+                        <div className="text-[10px] text-blue-500 font-bold uppercase">{req.tripType}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          req.status === 'finalizada' ? 'bg-green-100 text-green-700' : 
+                          req.status === 'en_proceso' ? 'bg-amber-100 text-amber-700' : 
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {req.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      {user?.role === 'agent' && (
+                        <td className="px-6 py-4 text-sm">
+                          <button 
+                            onClick={() => handleDelete(req.id)}
+                            className="text-red-500 hover:text-red-700 font-bold transition-colors"
+                          >
+                            Eliminar
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {requests.length === 0 && (
+                <div className="p-12 text-center">
+                  <p className="text-gray-400 italic">No se encontraron solicitudes registradas.</p>
                 </div>
-                
-                <p className="text-gray-600 mb-2">
-                  <span className="font-semibold">Fecha:</span> {req.date}
-                </p>
-                <p className="text-xs text-gray-400">ID: {req.id.slice(0, 8)}...</p>
-
-                <RequestActions id={req.id} />
-              </div>
-            ))
-          )}
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

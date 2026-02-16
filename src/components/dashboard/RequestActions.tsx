@@ -1,37 +1,44 @@
-// src/components/dashboard/RequestActions.tsx
 'use client';
 
-import { deleteRequest } from '@/services/api';
+import { travelService } from '@/services/api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-export default function RequestActions({ id }: { id: string }) {
-  const router = useRouter();
+interface RequestActionsProps {
+  requestId: string;
+  onDeleteSuccess: () => void;
+}
+
+export default function RequestActions({ requestId, onDeleteSuccess }: RequestActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const handleDelete = async () => {
-    if (!confirm('¿Estás seguro de eliminar esta solicitud?')) return;
-    
+    if (!confirm('¿Estás seguro de que deseas eliminar esta solicitud?')) {
+      return;
+    }
+
     setIsDeleting(true);
     try {
-      await deleteRequest(id);
-      router.refresh(); // Recargamos la data del servidor
+      await travelService.delete(requestId);
+      onDeleteSuccess();
     } catch (error) {
-      alert('Error al eliminar');
+      alert('Error al eliminar la solicitud');
+      console.error(error);
+    } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <div className="mt-4 flex gap-2 justify-end">
-      <button 
+    <div className="flex space-x-2">
+      <button
         onClick={handleDelete}
         disabled={isDeleting}
-        className="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 transition-colors"
+        className="text-red-600 hover:text-red-900 text-sm font-medium disabled:text-red-300"
       >
-        {isDeleting ? 'Borrando...' : 'Eliminar'}
+        {isDeleting ? 'Eliminando...' : 'Eliminar'}
       </button>
-      {/* Aquí podrías agregar un botón de Editar que abra un modal */}
     </div>
   );
 }
