@@ -1,4 +1,3 @@
-// src/app/auth/github/callback/page.tsx
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -19,7 +18,7 @@ export default function GitHubCallbackPage() {
     const code = searchParams.get('code');
 
     if (code) {
-      // Limpiamos tokens previos para evitar ver datos de otro usuario
+      // Limpiar sesión previa para evitar colisión de datos entre usuarios
       Cookies.remove('token', { path: '/' });
       Cookies.remove('userId', { path: '/' });
 

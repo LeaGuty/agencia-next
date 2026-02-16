@@ -26,7 +26,6 @@ export default function CreateRequestForm({ onSuccess }: CreateRequestFormProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Cargar lista de clientes para el buscador/selector
   useEffect(() => {
     const fetchClients = async () => {
       try {
@@ -45,7 +44,6 @@ export default function CreateRequestForm({ onSuccess }: CreateRequestFormProps)
     setError('');
 
     try {
-      // El backend generará el ID 1118... y la fecha de registro automáticamente
       await travelService.create(formData);
       setFormData({
         dni: '',
@@ -67,7 +65,7 @@ export default function CreateRequestForm({ onSuccess }: CreateRequestFormProps)
     }
   };
 
-  // Al seleccionar un cliente del buscador, autocompletamos su nombre y DNI
+  // Autocompleta nombre y DNI a partir del cliente seleccionado
   const handleClientChange = (userId: string) => {
     const selectedClient = clients.find(c => c.id === userId);
     if (selectedClient) {
@@ -88,7 +86,6 @@ export default function CreateRequestForm({ onSuccess }: CreateRequestFormProps)
       {error && <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Buscador de Clientes Registrados */}
         <div className="col-span-1 md:col-span-2">
           <label className="block text-sm font-medium text-gray-700">Asociar a Cliente Registrado (Búsqueda)</label>
           <select

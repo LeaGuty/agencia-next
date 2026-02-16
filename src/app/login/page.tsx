@@ -15,7 +15,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     
-    // Validación básica de campos vacíos y formato
     if (!formData.email.includes('@')) {
       return setError('Por favor, ingresa un correo electrónico válido.');
     }
@@ -27,11 +26,8 @@ export default function LoginPage() {
     try {
       const response = await authService.login(formData);
       
-      // Persistencia de sesión
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-
-      // Redirección al dashboard
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Credenciales inválidas. Inténtalo de nuevo.');

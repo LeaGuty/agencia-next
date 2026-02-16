@@ -7,13 +7,12 @@ import { travelService } from '@/services/api';
 import { TravelRequest, User } from '@/types';
 import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 
-// Implementación de carga dinámica (Lazy Loading) 
-// Se define un componente de carga (loading) para mejorar la experiencia del usuario
+// Lazy loading: el formulario usa APIs del navegador (localStorage), por eso ssr: false
 const CreateRequestForm = dynamic(
   () => import('@/components/dashboard/CreateRequestForm'),
-  { 
+  {
     loading: () => <div className="h-64 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center text-gray-500">Cargando formulario...</div>,
-    ssr: false // Desactiva el renderizado del lado del servidor para este módulo específico según la guía
+    ssr: false
   }
 );
 
@@ -26,7 +25,7 @@ export default function DashboardPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Requerimiento Semana 6: Simular espera de 3 segundos para retroalimentación visual
+      // Delay artificial para mostrar el skeleton de carga al usuario
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       const data = await travelService.getAll();
@@ -63,7 +62,6 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
-  // Mientras loading es true, se muestra el Skeleton (Retroalimentación visual)
   if (loading) return <DashboardSkeleton />;
 
   return (
@@ -87,14 +85,14 @@ export default function DashboardPage() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Lógica de Rol: Solo el Agente puede crear solicitudes */}
+        {/* Solo agentes pueden crear solicitudes */}
         {user?.role === 'agent' && (
           <div className="lg:col-span-1">
             <CreateRequestForm onSuccess={loadData} />
           </div>
         )}
 
-        {/* Tabla de Solicitudes (Visible para todos, pero con datos filtrados por rol) */}
+        {/* Tabla de solicitudes: agentes ven todas, clientes solo las propias (filtrado en backend) */}
         <div className={user?.role === 'agent' ? 'lg:col-span-2' : 'lg:col-span-3'}>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50">

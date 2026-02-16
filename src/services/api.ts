@@ -7,7 +7,7 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
-// Interceptor para añadir el token JWT en cada petición
+// Adjunta el token JWT a cada petición saliente
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -22,11 +22,9 @@ export const authService = {
     return response.data;
   },
   register: async (userData: any): Promise<any> => {
-    // Ahora enviamos el objeto completo que incluye el DNI
     const response = await api.post('/auth/register', userData);
     return response.data;
   },
-  // NUEVO: Obtener lista de clientes para el Agente
   getClients: async (): Promise<User[]> => {
     const response = await api.get('/auth/clients');
     return response.data;
@@ -46,7 +44,6 @@ export const travelService = {
     const response = await api.post('/requests', request);
     return response.data;
   },
-  // NUEVO: Modificar solicitud
   update: async (id: string, request: Partial<TravelRequest>): Promise<TravelRequest> => {
     const response = await api.put(`/requests/${id}`, request);
     return response.data;

@@ -17,7 +17,6 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Validación de contraseña: 6+ caracteres, Mayúscula, Minúscula y Número
   const validatePassword = (pass: string) => {
     const hasUpperCase = /[A-Z]/.test(pass);
     const hasLowerCase = /[a-z]/.test(pass);

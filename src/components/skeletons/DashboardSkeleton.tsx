@@ -3,7 +3,7 @@
 export default function DashboardSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      {/* Header Skeleton */}
+      {/* Header */}
       <header className="flex justify-between items-center mb-8 bg-white p-4 rounded-lg shadow-sm animate-pulse">
         <div className="space-y-3">
           <div className="h-6 bg-gray-200 rounded w-48"></div>
@@ -13,7 +13,7 @@ export default function DashboardSkeleton() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Form Skeleton (Lado izquierdo) */}
+        {/* Formulario */}
         <div className="lg:col-span-1 space-y-4 bg-white p-6 rounded-lg border border-gray-100 animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
           <div className="space-y-6">
@@ -27,7 +27,7 @@ export default function DashboardSkeleton() {
           </div>
         </div>
 
-        {/* Table Skeleton (Lado derecho) */}
+        {/* Tabla */}
         <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden animate-pulse">
           <div className="h-12 bg-gray-50 border-b border-gray-100"></div>
           <div className="divide-y divide-gray-100">

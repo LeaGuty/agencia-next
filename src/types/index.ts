@@ -3,22 +3,22 @@ export interface User {
   name: string;
   email: string;
   role: 'agent' | 'client';
-  dni?: string; // RUT formateado
+  dni?: string;
   avatar?: string;
 }
 
 export interface TravelRequest {
-  id: string;             // ID correlativo (ej: 1118) generado por el backend
-  dni: string;           // DNI/RUT del pasajero
-  passengerName: string; // Nombre del pasajero
-  origin: string;        // Ciudad de origen
-  destination: string;   // Ciudad de destino
+  id: string;
+  dni: string;
+  passengerName: string;
+  origin: string;
+  destination: string;
   tripType: 'negocios' | 'turismo' | 'otros';
-  linkedUserId: string;   // ID del usuario cliente en el sistema
-  linkedUserName: string; // Nombre del cliente (para el buscador)
-  departureDate: string;  // Fecha y hora de salida
-  returnDate: string;     // Fecha y hora de regreso
-  registrationDate: string; // Fecha de registro (automática)
+  linkedUserId: string;
+  linkedUserName: string;
+  departureDate: string;
+  returnDate: string;
+  registrationDate: string; // Generada automáticamente por el backend
   status: 'pendiente' | 'en_proceso' | 'finalizada';
 }
 
