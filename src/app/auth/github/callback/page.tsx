@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { loginWithGitHub } from '@/services/api';
+import { authService } from '@/services/api';
 import Cookies from 'js-cookie';
 
 export default function GitHubCallbackPage() {
@@ -22,11 +22,11 @@ export default function GitHubCallbackPage() {
       Cookies.remove('token', { path: '/' });
       Cookies.remove('userId', { path: '/' });
 
-      loginWithGitHub(code)
+      authService.loginWithGitHub(code)
         .then(() => {
           window.location.href = '/dashboard';
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           console.error('GitHub auth error:', error);
           setStatus('Error al autenticar con GitHub. Intenta nuevamente.');
           setTimeout(() => router.push('/login'), 3000);
